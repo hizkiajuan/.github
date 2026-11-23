@@ -6,7 +6,8 @@ Every public repository of hizkiajuan follows this. `scripts/oss-apply.ts` appli
 
 - **Tabs:** Issues on. Wiki, Projects and Discussions off.
 - **Merging:** squash only, the PR title is the commit title and the PR body its message, branches are deleted after merge, "Update branch" is on, auto-merge is off.
-- **Branch protection:** a ruleset named `main` on the default branch, enforced: no deletion, no force push, changes through a pull request, the `ci` check must pass. The admin role bypasses it, so the maintainer's release can push the release commit and tag to main.
+- **Branch protection:** a ruleset named `main` on the default branch, enforced: no deletion, no force push, linear history, changes through a pull request with every conversation resolved, the `ci` check must pass. The admin role bypasses it, so the maintainer's release can push the release commit and tag to main.
+- **Tag protection:** a ruleset named `release-tags` on `v*` tags: nobody, the admin included, can move or delete a published release tag. New tags can be pushed.
 - **Security:** secret scanning with push protection, Dependabot alerts and security updates, private vulnerability reporting.
 - **Actions:** the workflow token is read-only by default and cannot approve PRs; fork PRs from first-time contributors wait for approval.
 - **Labels:** `bug`, `enhancement`, `documentation`, `question`, `good first issue`, `help wanted`, `needs-triage`, `dependencies`, `accessibility`, `duplicate`, `invalid`, `wontfix`, with fixed colors. Labels are only added or recolored, never deleted.
@@ -14,7 +15,7 @@ Every public repository of hizkiajuan follows this. `scripts/oss-apply.ts` appli
 ## In each repository
 
 - `LICENSE`: MIT, `Copyright (c) <year> Hizkia Juan`.
-- `README.md`: what it is (one screenshot), install for users, develop locally, how it is built or deployed, Contributing, Licence ("Made by Juan and contributors").
+- `README.md`: what it is (one screenshot), install for users, develop locally, how it is built or deployed, Contributing, License ("Made by Juan and contributors").
 - `CONTRIBUTING.md`: setup and checks for that project, Conventional Commit PR titles, squash merges, open an issue before a feature, AI-assisted PRs welcome when the author reviewed and tested them, contributions licensed under MIT (no CLA, no DCO).
 - `SECURITY.md` only when the project needs its own scope section; otherwise the shared one applies.
 - `CHANGELOG.md`, written by the release.

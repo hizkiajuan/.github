@@ -96,6 +96,7 @@ const RULESET = {
   rules: [
     { type: "deletion" },
     { type: "non_fast_forward" },
+    { type: "required_linear_history" },
     {
       type: "pull_request",
       parameters: {
@@ -103,7 +104,7 @@ const RULESET = {
         dismiss_stale_reviews_on_push: false,
         require_code_owner_review: false,
         require_last_push_approval: false,
-        required_review_thread_resolution: false,
+        required_review_thread_resolution: true,
       },
     },
     {
@@ -114,6 +115,17 @@ const RULESET = {
       },
     },
   ],
+};
+
+// Published release tags can't be moved or deleted, by anyone. Creating a tag stays open, so the
+// release can push a new one.
+const TAG_RULESET = {
+  name: "release-tags",
+  target: "tag",
+  enforcement: "active",
+  conditions: { ref_name: { include: ["refs/tags/v*"], exclude: [] } },
+  bypass_actors: [],
+  rules: [{ type: "deletion" }, { type: "update" }],
 };
 
 const COMMUNITY_FILES_IN_REPO = [
@@ -300,39 +312,44 @@ for (const label of LABELS) {
   }
 }
 
-// The main ruleset.
+// Rulesets: main, and release-tags.
+type Rule = {
+  type: string;
+  parameters?: Record<string, unknown> & {
+    required_status_checks?: { context: string }[];
+  };
+};
 const rulesets = gh([`repos/${repo}/rulesets`]) as {
   id: number;
   name: string;
 }[];
-const existing = rulesets.find((ruleset) => ruleset.name === RULESET.name);
-if (!existing) {
-  fix("ruleset main", () =>
-    gh(["-X", "POST", `repos/${repo}/rulesets`], RULESET),
-  );
-} else {
+for (const want of [RULESET, TAG_RULESET] as const) {
+  const existing = rulesets.find((ruleset) => ruleset.name === want.name);
+  if (!existing) {
+    fix(`ruleset ${want.name}`, () =>
+      gh(["-X", "POST", `repos/${repo}/rulesets`], want),
+    );
+    continue;
+  }
   const full = gh([`repos/${repo}/rulesets/${existing.id}`]) as {
     enforcement: string;
-    rules: {
-      type: string;
-      parameters?: { required_status_checks?: { context: string }[] };
-    }[];
+    rules: Rule[];
     bypass_actors: { actor_id: number }[];
   };
-  const checks = full.rules
-    .find((rule) => rule.type === "required_status_checks")
-    ?.parameters?.required_status_checks?.map((check) => check.context);
-  const same =
-    full.enforcement === "active" &&
-    RULESET.rules.every((rule) =>
-      full.rules.some((have) => have.type === rule.type),
-    ) &&
-    checks?.length === 1 &&
-    checks[0] === REQUIRED_CHECK &&
-    full.bypass_actors.some((actor) => actor.actor_id === 5);
-  if (!same) {
-    fix(`ruleset main (required check ${REQUIRED_CHECK})`, () =>
-      gh(["-X", "PUT", `repos/${repo}/rulesets/${existing.id}`], RULESET),
+  const differs = (want.rules as readonly Rule[]).some((rule) => {
+    const have = full.rules.find((item) => item.type === rule.type);
+    if (!have) return true;
+    return Object.entries(rule.parameters ?? {}).some(
+      ([key, value]) =>
+        JSON.stringify(have.parameters?.[key]) !== JSON.stringify(value),
+    );
+  });
+  const bypassDiffers =
+    JSON.stringify(full.bypass_actors.map((actor) => actor.actor_id).sort()) !==
+    JSON.stringify(want.bypass_actors.map((actor) => actor.actor_id).sort());
+  if (full.enforcement !== "active" || differs || bypassDiffers) {
+    fix(`ruleset ${want.name}`, () =>
+      gh(["-X", "PUT", `repos/${repo}/rulesets/${existing.id}`], want),
     );
   }
 }
