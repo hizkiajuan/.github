@@ -27,7 +27,7 @@ Every public repository of hizkiajuan follows this. `scripts/oss-apply.ts` appli
 
 ## Shared from this repository
 
-`CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, reports to oss@hizkiajuan.com), `SUPPORT.md` and the fallback `SECURITY.md` apply to every public repository without its own copy. A repository must not keep its own `CODE_OF_CONDUCT.md` or `SUPPORT.md`.
+`CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, reports to oss@hizkiajuan.com), `SUPPORT.md` and the fallback `SECURITY.md` apply to every public repository without its own copy. So do the generic issue forms (bug, feature, question) and PR template in `.github/`, until a repository adds its own; a repository's own forms should ask what that project needs (Pinprompt asks for the produced prompt). A repository must not keep its own `CODE_OF_CONDUCT.md` or `SUPPORT.md`.
 
 ## Releases
 
