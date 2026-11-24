@@ -354,12 +354,18 @@ for (const want of [RULESET, TAG_RULESET] as const) {
   }
 }
 
-// Files: the repo's own, and the shared ones it must not shadow.
-for (const file of COMMUNITY_FILES_IN_REPO) {
+// Files: the repo's own, and the shared ones it must not shadow. The .github repository is where
+// the shared files live, and it has no releases, so it only needs a LICENSE, README and
+// CONTRIBUTING.
+const isSharedRepo = repo.endsWith("/.github");
+const ownFiles = isSharedRepo
+  ? ["LICENSE", "README.md", "CONTRIBUTING.md"]
+  : COMMUNITY_FILES_IN_REPO;
+for (const file of ownFiles) {
   if (ghStatus(`repos/${repo}/contents/${file}`) !== 200)
     notes.push(`missing ${file}`);
 }
-for (const file of SHARED_FILES) {
+for (const file of isSharedRepo ? [] : SHARED_FILES) {
   if (ghStatus(`repos/${repo}/contents/${file}`) === 200) {
     notes.push(
       `${file} shadows the shared one in hizkiajuan/.github; delete it`,
